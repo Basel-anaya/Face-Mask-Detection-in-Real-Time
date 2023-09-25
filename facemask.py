@@ -29,7 +29,13 @@ outputs = Dense(1, activation='sigmoid')(x)
 model = keras.Model(inputs=inputs, outputs=outputs)
 model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['accuracy'])
 
-# Create data generators for training and testing
+# Data Generators for Training and Testing
+
+# Create an image data generator for training data.
+# - `rescale`: Normalize pixel values to be in the [0, 1] range.
+# - `shear_range`: Randomly apply shearing transformations.
+# - `zoom_range`: Randomly apply zooming transformations.
+# - `horizontal_flip`: Randomly flip images horizontally.
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     shear_range=0.2,
@@ -37,8 +43,14 @@ train_datagen = ImageDataGenerator(
     horizontal_flip=True
 )
 
+# Create an image data generator for testing data.
+# - `rescale`: Normalize pixel values to be in the [0, 1] range.
 test_datagen = ImageDataGenerator(rescale=1./255)
 
+# Generate batches of training data from the 'train' directory.
+# - `target_size`: Resize images to the specified dimensions (150x150 pixels).
+# - `batch_size`: Number of samples per batch.
+# - `class_mode`: Binary classification ('binary' means two classes: mask and no mask).
 train_set = train_datagen.flow_from_directory(
     'train',
     target_size=input_shape[:2],
@@ -46,6 +58,10 @@ train_set = train_datagen.flow_from_directory(
     class_mode='binary'
 )
 
+# Generate batches of testing data from the 'test' directory.
+# - `target_size`: Resize images to the specified dimensions (150x150 pixels).
+# - `batch_size`: Number of samples per batch.
+# - `class_mode`: Binary classification ('binary' means two classes: mask and no mask).
 test_set = test_datagen.flow_from_directory(
     'test',
     target_size=input_shape[:2],
@@ -53,7 +69,13 @@ test_set = test_datagen.flow_from_directory(
     class_mode='binary'
 )
 
-# Train the model
+# Train the Model
+
+# Fit the model using the training data.
+# - `steps_per_epoch`: Number of batches of samples to use per epoch.
+# - `epochs`: Number of training epochs.
+# - `validation_data`: Use the testing data for validation during training.
+# - `validation_steps`: Number of batches of testing data to use for validation.
 model.fit(
     train_set,
     steps_per_epoch=len(train_set),
