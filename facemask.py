@@ -1,19 +1,20 @@
+# Import necessary libraries
 import numpy as np
 import keras
 import tensorflow as tf
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-from keras.models import Sequential,load_model
+from keras.models import Sequential, load_model
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
 from keras.preprocessing import image
 import cv2
 import datetime
 
-
-# Building model to classify between mask and no mask
+# Define input shape for the CNN model
 input_shape = (150, 150, 3)
 
+# Build and compile the CNN model
 inputs = keras.Input(shape=input_shape)
 x = Conv2D(32, (3, 3), activation='relu')(inputs)
 x = MaxPooling2D()(x)
@@ -28,7 +29,7 @@ outputs = Dense(1, activation='sigmoid')(x)
 model = keras.Model(inputs=inputs, outputs=outputs)
 model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['accuracy'])
 
-# Data generators
+# Create data generators for training and testing
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     shear_range=0.2,
@@ -52,7 +53,7 @@ test_set = test_datagen.flow_from_directory(
     class_mode='binary'
 )
 
-# Training the model
+# Train the model
 model.fit(
     train_set,
     steps_per_epoch=len(train_set),
@@ -61,26 +62,39 @@ model.fit(
     validation_steps=len(test_set)
 )
 
+# Save the trained model
 model.save('mymodel.h5')
 
-# Implementing live detection of face mask
+# Implement real-time face mask detection
 model = keras.models.load_model('mymodel.h5')
 
+# Initialize the video capture and face detection
 cap = cv2.VideoCapture(0)
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 while cap.isOpened():
+    # Read a frame from the video feed
     _, img = cap.read()
+    
+    # Detect faces in the frame
     faces = face_cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4)
     
     for (x, y, w, h) in faces:
+        # Crop the detected face
         face_img = img[y:y+h, x:x+w]
+        
+        # Save the cropped face as a temporary image
         cv2.imwrite('temp.jpg', face_img)
+        
+        # Load and preprocess the temporary image for prediction
         test_image = tf.keras.utils.load_img('temp.jpg', target_size=input_shape[:2])
         test_image = tf.keras.utils.img_to_array(test_image)
         test_image = np.expand_dims(test_image, axis=0)
+        
+        # Make predictions using the loaded model
         pred = model.predict(test_image)[0][0]
         
+        # Display the result on the video feed
         if pred == 1:
             cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 3)
             cv2.putText(img, 'NO MASK', ((x+w)//2, y+h+20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
@@ -88,12 +102,20 @@ while cap.isOpened():
             cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 3)
             cv2.putText(img, 'MASK', ((x+w)//2, y+h+20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
         
+        # Display the current date and time on the video feed
         datet = str(datetime.datetime.now())
         cv2.putText(img, datet, (400, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
           
+    # Display the frame with face detection results
     cv2.imshow('img', img)
     
+    # Exit the loop when 'q' key is pressed
     if cv2.waitKey(1) == ord('q'):
+        break
+    
+# Release the video capture and close all windows
+cap.release()
+cv2.destroyAllWindows()
         break
     
 cap.release()
