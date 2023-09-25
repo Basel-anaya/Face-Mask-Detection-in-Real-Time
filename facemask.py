@@ -14,19 +14,46 @@ import datetime
 # Define input shape for the CNN model
 input_shape = (150, 150, 3)
 
-# Build and compile the CNN model
+# Build and Compile the CNN Model
+
+# Create an input layer for the model with the specified input shape (150x150 pixels with 3 color channels).
 inputs = keras.Input(shape=input_shape)
+
+# Add the first convolutional layer with 32 filters, each of size (3, 3), and ReLU activation.
 x = Conv2D(32, (3, 3), activation='relu')(inputs)
+
+# Apply max-pooling to reduce the spatial dimensions of the feature maps.
 x = MaxPooling2D()(x)
+
+# Add a second convolutional layer with 32 filters, each of size (3, 3), and ReLU activation.
 x = Conv2D(32, (3, 3), activation='relu')(x)
+
+# Again, apply max-pooling to reduce the spatial dimensions.
 x = MaxPooling2D()(x)
+
+# Add a third convolutional layer with 32 filters, each of size (3, 3), and ReLU activation.
 x = Conv2D(32, (3, 3), activation='relu')(x)
+
+# Once more, apply max-pooling to further reduce spatial dimensions.
 x = MaxPooling2D()(x)
+
+# Flatten the output to prepare it for the fully connected layers.
 x = Flatten()(x)
+
+# Add a fully connected (dense) layer with 100 units and ReLU activation.
 x = Dense(100, activation='relu')(x)
+
+# The final output layer consists of a single neuron with a sigmoid activation function,
+# which is suitable for binary classification (mask or no mask).
 outputs = Dense(1, activation='sigmoid')(x)
 
+# Create the Keras Model by specifying the input and output layers.
 model = keras.Model(inputs=inputs, outputs=outputs)
+
+# Compile the model:
+# - Use the Adam optimizer for training.
+# - Define the loss function as binary cross-entropy, suitable for binary classification.
+# - Track the 'accuracy' metric during training.
 model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['accuracy'])
 
 # Data Generators for Training and Testing
